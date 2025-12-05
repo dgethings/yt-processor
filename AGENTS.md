@@ -1,11 +1,507 @@
-# AGENTS.md
+# AGENTS.md - Agent Workflow & Development Guidelines
+
+**CRITICAL: This file contains essential instructions for OpenCode agents working on this project.**
+
+You will use the `bd` command-line tool for all work tracking, task management, and issue discovery. This ensures work is centralized, dependencies are tracked, and context persists across agent sessions.
+
+---
+
+## 🤖 Agent Workflow - Your Task Management System
+
+This section explains how you should work on this project. Follow these steps in order for each task.
+
+### What is `bd` and Why Use It?
+
+`bd` is a **dependency-aware issue tracker** that:
+- **Centralizes all work** in `.beads/beads.db` (the local database)
+- **Tracks dependencies** to prevent duplicate effort
+- **Persists context** across agent sessions using the beads system
+- **Enables coordination** between multiple agents working in parallel
+
+**Documentation:** https://github.com/steveyegge/beads
+
+The `.beads/` directory contains:
+- `beads.db` - Your work database
+- `issues.jsonl` - Git-synced work items
+- `config.yaml` - Project configuration
+- `.local_version` - Version tracking
+
+### Step 1: Check Ready Work
+
+**When:** At the start of each work session or after completing a task.
+
+**Command:**
+```bash
+bd ready
+```
+
+**Purpose:** Shows issues that are ready to claim (open status + no blocking dependencies).
+
+**What to do:**
+- If there are ready issues, pick one with the highest priority
+- Look for Priority 0 (critical) work first
+- If no ready issues, check `bd list --status open` to see all open work
+
+---
+
+### Step 2: Claim an Issue
+
+**When:** You've selected work from `bd ready`.
+
+**Command:**
+```bash
+bd update yt-1 --status in_progress
+```
+
+**Purpose:** Marks the issue as claimed so other agents know you're working on it.
+
+**Why:** Prevents duplicate effort and shows clear ownership of work.
+
+---
+
+### Step 3: Track Your Work Session
+
+**When:** You're starting significant work (especially multi-step tasks or bug fixes).
+
+**Command:**
+```bash
+bd create "Session: <your task description>" --status in_progress
+```
+
+**Example:**
+```bash
+bd create "Session: Fix 3 critical issues from codebase review" --status in_progress
+```
+
+**Purpose:** Creates a session issue that becomes your work container and context anchor.
+
+**Why This Matters:**
+- If you're interrupted, you can restore context by showing the session issue
+- All issues discovered during this session can be linked to the session
+- Future agents can see what you were working on and why
+- Your context isn't lost when the tool terminates
+
+**Output:** You'll get a session issue ID like `yt-47`
+
+---
+
+### Step 4: Discover and File New Issues
+
+**When:** You find bugs, missing features, incomplete implementations, or documentation gaps.
+
+**Command:**
+```bash
+bd create "<issue title>" -p <priority> -d "<description>"
+```
+
+**Examples:**
+```bash
+bd create "Add npm scripts to package.json" -p 0 -d "Missing: build, dev, test, type-check scripts. Blocks testing."
+
+bd create "Protect JSON.parse calls with try-catch" -p 0 -d "4 unprotected locations can crash on malformed JSON. See youtube-processor.ts lines 150, 161"
+
+bd create "Enable TypeScript noImplicitAny" -p 1 -d "Currently disabled in tsconfig.json. Reduces type safety."
+
+bd create "Extract sanitizeTitle utility" -p 2 -d "Function duplicated in youtube-transcript.ts and youtube-processor.ts"
+```
+
+**Important:**
+- File issues **immediately** when you discover them
+- Don't use markdown files or code comments for tracking
+- Include line numbers and file references for bugs
+- Link to CODEBASE_REVIEW.md for context
+- Use the priority mapping below
+
+---
+
+### Step 5: Link Dependencies
+
+**When:** A new issue depends on or relates to existing issues.
+
+**Command:**
+```bash
+bd dep add yt-new-id yt-blocking-id
+```
+
+**Example:**
+If `yt-1` (npm scripts) must be done before `yt-3` (run tests):
+```bash
+bd dep add yt-3 yt-1
+```
+
+**Purpose:** Prevents agents from attempting blocked work.
+
+**Visualize dependencies:**
+```bash
+bd dep tree yt-3
+```
+
+This shows all issues that must be completed before yt-3 is ready.
+
+---
+
+### Step 6: Link to Your Session
+
+**When:** You discover a new issue while working on a session.
+
+**Command:**
+```bash
+bd dep add yt-new-id yt-session-id
+```
+
+**Example:**
+If you're in session `yt-47` and discover issue `yt-50`:
+```bash
+bd dep add yt-50 yt-47
+```
+
+**Purpose:** Shows that this issue was discovered during that session, maintaining work context.
+
+---
+
+### Step 7: Update Status As You Work
+
+**When:** Your work progresses through different stages.
+
+**Command:**
+```bash
+bd update yt-1 --status in_progress
+bd update yt-1 --status open  # If blocked, reopen it
+```
+
+**Status values:** `open`, `in_progress`, `blocked`, `closed`
+
+---
+
+### Step 8: Complete Your Work
+
+**When:** An issue is fixed, implemented, or documented.
+
+**Command:**
+```bash
+bd close yt-1
+bd close yt-1 yt-2 yt-3  # Close multiple at once
+```
+
+**Purpose:** Marks task complete and removes it from the work queue.
+
+---
+
+### Step 9: Close Your Session
+
+**When:** You're done with your work session and want to wrap up.
+
+**Command:**
+```bash
+bd close yt-47  # Where yt-47 is your session issue
+```
+
+**Purpose:** Marks the session complete. The session issue ID now serves as a historical reference for what was accomplished.
+
+---
+
+### Restoring Context Between Sessions
+
+**Problem:** Agent work sessions may be interrupted. How do you restore context?
+
+**Solution:** Use session issues as context anchors.
+
+**On Next Run:**
+```bash
+bd show yt-47  # Shows your previous session
+bd show yt-50  # Shows issue you discovered
+bd show yt-51  # Shows related work
+```
+
+**Benefits:**
+- ✅ No context loss across agent restarts
+- ✅ Full history preserved in beads database
+- ✅ Other agents can see what you were doing
+- ✅ Dependencies prevent duplicate work
+- ✅ Automatic git sync preserves everything
+
+---
+
+## Priority & Severity Mapping
+
+Use this mapping when filing issues to assign the correct priority:
+
+| Severity | Priority | bd Flag | Examples | When to Use |
+|----------|----------|---------|----------|------------|
+| **CRITICAL** | 0 | `-p 0` | Crashes, test failures, broken builds, security issues | Bug prevents functionality or blocks all other work |
+| **IMPORTANT** | 1 | `-p 1` | Type safety, validation, missing error handling | Risk of future failures or must fix before release |
+| **MEDIUM** | 2 | `-p 2` | Code duplication, edge cases, docs gaps | Technical debt or maintenance needs |
+| **LOW** | 3 | `-p 3` | Polish, version updates, optional features | Enhancement without blocking value |
+
+### Examples from Codebase Review
+
+```bash
+bd create "Missing npm scripts" -p 0 -d "Blocks testing - Issue #1 from CODEBASE_REVIEW.md"
+
+bd create "Unprotected JSON.parse calls" -p 0 -d "App crashes on malformed JSON - Issue #2 from CODEBASE_REVIEW.md"
+
+bd create "Fix module resolution error" -p 0 -d "Test suite broken - Issue #3 from CODEBASE_REVIEW.md"
+
+bd create "Enable TypeScript noImplicitAny" -p 1 -d "Improves type safety - Issue #4 from CODEBASE_REVIEW.md"
+
+bd create "Add debug logging to fetch" -p 1 -d "Difficult to troubleshoot - Issue #5 from CODEBASE_REVIEW.md"
+
+bd create "Extract sanitizeTitle utility" -p 2 -d "Code duplication - Issue #17 from CODEBASE_REVIEW.md"
+```
+
+---
+
+## Handling Discoveries & Codebase Review
+
+### When You Discover Issues
+
+**Immediately file issues using bd create.** Don't use:
+- ❌ Markdown files for tracking
+- ❌ Code comments with TODO
+- ❌ Text files
+- ❌ Verbal notes
+
+**Why:** Keeps work tracking centralized and actionable in bd.
+
+---
+
+### IMMEDIATE ACTION: Codebase Review Findings
+
+A comprehensive codebase review identified **31 issues** in CODEBASE_REVIEW.md:
+- **3 Critical** (p:0) - Must fix immediately
+- **9 Important** (p:1) - Fix before production
+- **14 Medium** (p:2) - Improve quality
+- **5 Low** (p:3) - Nice to have
+
+**Your task:** File these as bd issues immediately.
+
+**Template:**
+```bash
+bd create "<issue-title>" -p <priority> -d "<description from CODEBASE_REVIEW.md>"
+```
+
+### Critical Issues to File First (Priority 0)
+
+```bash
+# Issue #1: Missing npm scripts
+bd create "Add npm scripts to package.json" -p 0 -d "CRITICAL: No build, dev, test, type-check scripts defined. Blocks testing and development workflow. See CODEBASE_REVIEW.md Issue #1."
+
+# Issue #2: Unprotected JSON.parse calls  
+bd create "Protect JSON.parse calls with try-catch" -p 0 -d "CRITICAL: 4 unprotected JSON.parse calls can crash on malformed data. Locations: youtube-processor.ts (150, 161), transcript-summarizer.ts (101, 121). See CODEBASE_REVIEW.md Issue #2."
+
+# Issue #3: Module resolution error
+bd create "Fix @opencode-ai/plugin module resolution" -p 0 -d "CRITICAL: test-agents.js fails with ERR_MODULE_NOT_FOUND. Cannot run tests. See CODEBASE_REVIEW.md Issue #3."
+```
+
+### Important Issues to File (Priority 1)
+
+```bash
+bd create "Enable TypeScript noImplicitAny" -p 1 -d "IMPORTANT: tsconfig.json has noImplicitAny: false reducing type safety. See CODEBASE_REVIEW.md Issue #4."
+
+bd create "Add debug logging to fetch operations" -p 1 -d "IMPORTANT: Silent failures in transcript retrieval make troubleshooting difficult. See CODEBASE_REVIEW.md Issue #5."
+
+bd create "Add runtime parameter validation" -p 1 -d "IMPORTANT: Optional parameters not validated when provided. See CODEBASE_REVIEW.md Issue #6."
+
+bd create "Fix file operation error handling" -p 1 -d "IMPORTANT: Permission errors treated as 'file not found'. Need error code checking. See CODEBASE_REVIEW.md Issue #7."
+
+bd create "Improve URL extraction patterns" -p 1 -d "IMPORTANT: Regex assumes exactly 11-character video IDs. Doesn't handle all URL variations. See CODEBASE_REVIEW.md Issue #8."
+
+bd create "Add null/undefined checks in summarizer" -p 1 -d "IMPORTANT: String operations without defensive checks can crash on edge cases. See CODEBASE_REVIEW.md Issue #9."
+```
+
+### Linking Related Issues
+
+If Issue A blocks Issue B, link them:
+
+```bash
+bd dep add yt-2 yt-1
+```
+
+Example: npm scripts (yt-1) blocks test execution (yt-3):
+```bash
+bd dep add yt-3 yt-1
+```
+
+Visualize the dependency tree:
+```bash
+bd dep tree yt-3
+```
+
+### Tracking Multi-Issue Work
+
+Create a session for working through the codebase review:
+
+```bash
+bd create "Session: File codebase review issues and fix critical bugs" --status in_progress
+```
+
+This creates a session (e.g., yt-47) that becomes your context anchor.
+
+---
+
+## Quick BD Command Reference
+
+Fast lookup for common agent operations:
+
+### Viewing Work
+
+```bash
+bd ready                    # Show ready issues to claim (FIRST THING AGENTS RUN)
+bd list                     # Show all issues
+bd list --status open       # Show open issues only
+bd list --priority 0        # Show critical priority work
+bd show yt-1                # Show details of specific issue
+bd show yt-47               # Restore context from previous session
+```
+
+### Claiming & Tracking Work
+
+```bash
+bd update yt-1 --status in_progress     # Claim an issue
+bd create "Session: <desc>" --status in_progress  # Start work session
+bd show yt-session-1                    # Restore previous session context
+```
+
+### Discovering Issues
+
+```bash
+bd create "Issue title" -p 0 -d "Detailed description"  # File critical issue
+bd create "Issue title" -p 1 -d "Detailed description"  # File important issue
+bd create "Issue title" -p 2 -d "Detailed description"  # File medium issue
+bd create "Issue title" -p 3 -d "Detailed description"  # File low priority issue
+```
+
+### Managing Dependencies
+
+```bash
+bd dep add yt-2 yt-1        # Mark yt-1 as blocking yt-2
+bd dep tree yt-2            # View all dependencies for yt-2
+bd dep cycles               # Detect circular dependencies
+```
+
+### Completing Work
+
+```bash
+bd close yt-1                    # Mark single issue complete
+bd close yt-1 yt-2 yt-3          # Close multiple issues at once
+```
+
+### Database Information
+
+```bash
+# Database location: .beads/beads.db
+# Git-synced to: .beads/issues.jsonl
+# Full documentation: https://github.com/steveyegge/beads
+```
+
+---
+
+## Context Management with Beads
+
+### What is Beads?
+
+**Beads** is the long-term memory system that persists across agent sessions:
+- Stores all work in `.beads/` directory
+- Automatically syncs to git (`issues.jsonl`)
+- Enables context restoration between interruptions
+- Maintains complete history of all work
+
+### How Agents Use Beads
+
+1. **File issues** with `bd create` for work you discover
+2. **Create session issues** at start of significant work
+3. **Update status** as you make progress
+4. **Reference previous sessions** to restore context
+
+### Recommended Session Pattern
+
+#### Start Your Session
+```bash
+bd create "Session: Fix critical issues from review" --status in_progress
+# Output: yt-47: Session: Fix critical issues from review
+```
+
+#### Do Your Work
+- Make code edits
+- File new issues as you discover them: `bd create "New issue" -p <priority>`
+- Link them to session: `bd dep add yt-new yt-47`
+- Update issue status: `bd update yt-1 --status in_progress`
+- Close completed work: `bd close yt-1`
+
+#### End Your Session
+```bash
+bd close yt-47  # Session issue now serves as historical reference
+```
+
+#### Restore Previous Context (On Next Run)
+```bash
+bd show yt-47           # What was I doing?
+bd show yt-50           # Issues I discovered
+bd show yt-51           # Related work
+bd list --assignee me   # My work items
+```
+
+### Why This Matters for Agents
+
+- ✅ **Interruptions don't lose context** - Session issues restore work state
+- ✅ **No duplicate effort** - Dependencies prevent overlapping work
+- ✅ **Full audit trail** - Every discovery, status change, and completion is tracked
+- ✅ **Other agents see your work** - Enables coordination without real-time communication
+- ✅ **Automatic git sync** - Work persists in version control
+
+---
 
 ## Build/Test Commands
 
-- **Install dependencies**: `npm install`
-- **Type check**: `npx tsc --noEmit`
-- **Lint**: `npx eslint .` (if eslint is added)
-- **Format**: `npx prettier --write .` (if prettier is added)
+**Current Status:**
+- ❌ **BROKEN** - No npm scripts defined in package.json (See Issue #1, CODEBASE_REVIEW.md)
+- ⚠️ **PARTIALLY WORKING** - TypeScript compiles but test suite cannot run
+- 📋 **Reference:** CODEBASE_REVIEW.md for complete issue analysis
+
+### Workaround Commands (Until npm scripts are added)
+
+```bash
+# Install dependencies
+npm install
+
+# Manual type check (workaround - use `npm run type-check` after fix)
+npx tsc --noEmit
+
+# Manual build (workaround - use `npm run build` after fix)
+npx tsc
+
+# Manual linting (if eslint is configured)
+npx eslint .
+
+# Manual formatting (if prettier is configured)
+npx prettier --write .
+```
+
+### After Fixing Issue #1 (Add npm scripts)
+
+Once `npm run build`, `npm run dev`, `npm run test`, `npm run type-check` are added to package.json, use:
+
+```bash
+npm install          # Install dependencies
+npm run build        # Compile TypeScript
+npm run dev          # Watch mode for development
+npm test             # Run test suite
+npm run type-check   # Type checking without emitting
+```
+
+### For Agents Working on Build Commands
+
+1. When fixing **yt-1** (Add npm scripts):
+   - Update package.json with scripts
+   - Verify: `npm test` should work after fix
+   - Close issue: `bd close yt-1`
+
+2. If build commands fail:
+   - File new issue with details
+   - Link to related issues
+   - Track in bd
+
+---
 
 ## Code Style Guidelines
 
@@ -18,23 +514,58 @@
 - **Environment variables**: Use `process.env.VAR_NAME` for configuration
 - **Line length**: Follow common JavaScript conventions (100-120 characters)
 - **Dependencies**: Add new dependencies to package.json
+- **File organization**: Extract shared utilities to avoid duplication
+  - **Reference:** CODEBASE_REVIEW.md Issue #17 - `sanitizeTitle()` is duplicated in 2 files
+- **Input validation**: Validate all user inputs, don't assume data structure
+  - **Reference:** CODEBASE_REVIEW.md Issue #6, #29 for validation examples
 
-## Primary Instruction
+---
 
-Use the bd command-line tool for all new work, task planning, and issue tracking. Do not use markdown for planning or TODOs.
+## Collaboration & Agent Coordination
 
-## Task Management Flow
+### Using `bd` for Multi-Agent Coordination
 
-- When you encounter a problem or a new task (e.g., 'fix broken tests'), file an issue immediately using bd create 'Description of the issue'.
-- Before starting work, check for ready tasks with bd ready and claim the issue using bd update <issue-id> --status in_progress.
-- After completing a task, close the issue with bd close <issue-id> 'Done'.
-- If a task depends on another, use the dependency tracking feature to link them.
+When multiple agents work on this project:
 
-## Context Management
+1. **Check ready work:** `bd ready` shows unblocked tasks
+2. **Use dependencies:** Link issues to prevent duplicate effort
+3. **Claim work:** Update status to `in_progress` to show ownership
+4. **Assign work:** `bd update yt-1 --assignee agent-name` (if needed)
 
-Use the beads system as your long-term memory to restore context and navigate historical tasks without loading everything into your current context window.
+**Best practice:** Dependencies prevent most coordination issues without real-time communication.
 
-## Collaboration
+### Using Agent Mail for Complex Coordination
 
-If multiple agents or humans are working on the project, tell the agent to use the Agent Mail server for coordination to prevent conflicts: "Coordinate work with other agents using the Agent Mail system. Ensure you set the environment variables BEADS_AGENT_MAIL_URL, BEADS_AGENT_NAME, and BEADS_PROJECT_ID as per the documentation".
+If multiple agents need real-time coordination:
 
+```bash
+# Set these environment variables:
+export BEADS_AGENT_MAIL_URL="<your-url>"
+export BEADS_AGENT_NAME="<agent-name>"
+export BEADS_PROJECT_ID="<project-id>"
+```
+
+**Reference:** Agent Mail documentation for setup details
+
+**When to use:** Only for blocking coordination needs. Use `bd` dependencies first.
+
+---
+
+## Summary
+
+**You are now ready to work on this project using `bd`:**
+
+1. ✅ Read this document
+2. ✅ Run `bd ready` to see available work
+3. ✅ Claim issues with `bd update <issue-id> --status in_progress`
+4. ✅ Create session issues for context tracking
+5. ✅ File issues immediately when discovered
+6. ✅ Link dependencies to prevent duplicate work
+7. ✅ Close completed work with `bd close`
+8. ✅ Restore context between sessions using session issues
+
+**Database location:** `.beads/beads.db`  
+**Documentation:** https://github.com/steveyegge/beads  
+**Codebase review:** CODEBASE_REVIEW.md (31 identified issues)  
+
+Good luck! 🚀
