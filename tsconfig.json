@@ -12,7 +12,7 @@
     "declaration": true,
     "outDir": "./dist",
     "rootDir": "./",
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "DOM"],
     "noImplicitAny": true
   },
   "include": [

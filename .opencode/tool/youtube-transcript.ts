@@ -158,17 +158,17 @@ export default tool({
     try {
       const { title, description } = await getYouTubeMetadata(args.video_id)
       const transcript = await getYouTubeTranscript(args.video_id)
-      
+
       const result: YouTubeVideoInfo = {
         video_id: args.video_id,
         title,
         transcript,
         description
       }
-      
+
       return JSON.stringify(result)
     } catch (error) {
       throw new Error(`YouTube tool failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   },
-})
+}) as any
