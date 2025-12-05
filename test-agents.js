@@ -77,8 +77,10 @@ async function runTests() {
 
   // Check if YouTube API key is set
   if (!process.env.YOUTUBE_API_KEY) {
-    console.log('⚠️  YOUTUBE_API_KEY not set. Some tests may fail.')
-    console.log('   Set it with: export YOUTUBE_API_KEY="your_api_key"')
+    console.error('❌ YOUTUBE_API_KEY environment variable not set.')
+    console.error('   Please obtain a YouTube Data API v3 key from Google Cloud Console')
+    console.error('   and set it with: export YOUTUBE_API_KEY="your_api_key"')
+    process.exit(1)
   }
 
   const transcriptResult = await testYouTubeTranscript()

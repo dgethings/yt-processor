@@ -149,6 +149,12 @@ export default tool({
     video_id: tool.schema.string().describe("YouTube video ID to fetch transcript and metadata for")
   },
   async execute(args, context): Promise<string> {
+    // Validate required environment variable
+    const apiKey = process.env.YOUTUBE_API_KEY
+    if (!apiKey) {
+      throw new Error('YOUTUBE_API_KEY environment variable not set. Please obtain a YouTube Data API v3 key from Google Cloud Console and set the environment variable.')
+    }
+
     try {
       const { title, description } = await getYouTubeMetadata(args.video_id)
       const transcript = await getYouTubeTranscript(args.video_id)

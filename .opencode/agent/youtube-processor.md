@@ -5,6 +5,7 @@ model: anthropic/claude-sonnet-4-20250514
 tools:
   youtube-transcript: true
   transcript-summarizer: true
+  webfetch: true
   write: true
   edit: true
   bash: true
@@ -23,6 +24,24 @@ You will receive these parameters:
 - `overwrite_file` (optional): Whether to overwrite existing files
 
 ## Processing Steps
+
+### 0. Validate Environment Variables
+Before processing any YouTube video, validate that required environment variables are set:
+
+- `YOUTUBE_API_KEY`: Required for fetching video metadata from YouTube Data API v3
+
+If any required environment variable is missing, provide a clear error message with setup instructions:
+
+```
+Error: Missing required environment variable YOUTUBE_API_KEY
+
+Please set up your YouTube API key:
+1. Go to https://console.cloud.google.com/
+2. Create a new project or select an existing one
+3. Enable the YouTube Data API v3
+4. Create credentials (API Key)
+5. Set the environment variable: export YOUTUBE_API_KEY="your_api_key_here"
+```
 
 ### 1. Extract Video ID
 Extract the video ID from the YouTube URL or validate the direct ID. Handle these formats:
