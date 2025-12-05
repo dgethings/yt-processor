@@ -193,12 +193,15 @@ bd update yt-1 --status open  # If blocked, reopen it
 ```bash
 bd close yt-1
 bd close yt-1 yt-2 yt-3  # Close multiple at once
+git checkout -b feature/yt-1  # Create a new branch for the changes
 git add .
 git commit -m "feat: implement new feature"  # Use conventional commit format (see guidelines below)
-git push
+git push -u origin feature/yt-1
+gh pr create --title "feat: implement new feature" --body "Closes yt-1" --base main --head feature/yt-1
+gh pr merge feature/yt-1 --merge --delete-branch
 ```
 
-**Purpose:** Marks task complete and removes it from the work queue. And adds the changes to git using conventional commits for automated versioning.
+**Purpose:** Marks task complete and removes it from the work queue. Creates a feature branch, commits changes, pushes, creates a PR, and merges it to main upon success using conventional commits for automated versioning.
 
 ### Restoring Context Between Sessions
 
