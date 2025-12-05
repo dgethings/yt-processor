@@ -1,4 +1,5 @@
 import { tool } from "@opencode-ai/plugin"
+import { sanitizeTitle } from '../utils/sanitize.js'
 
 interface YouTubeVideoInfo {
   video_id: string
@@ -71,6 +72,7 @@ async function getYouTubeTranscript(videoId: string): Promise<string> {
         }
       }
     } catch (error) {
+      console.debug(`Transcript fetch failed for lang=${lang}: ${error instanceof Error ? error.message : String(error)}`)
       // Continue to next method
     }
   }
@@ -89,6 +91,7 @@ async function getYouTubeTranscript(videoId: string): Promise<string> {
       }
     }
   } catch (error) {
+    console.debug(`Transcript fetch failed for fallback method: ${error instanceof Error ? error.message : String(error)}`)
     // Continue to fallback
   }
   
@@ -130,13 +133,7 @@ async function getYouTubeMetadata(videoId: string): Promise<{ title: string; des
   }
 }
 
-function sanitizeTitle(title: string): string {
-  return title
-    .replace(/^\[/, '')
-    .replace(/\]$/, '')
-    .replace(/:/g, '-')
-    .trim()
-}
+
 
 export default tool({
   description: "Get YouTube video transcript and metadata",

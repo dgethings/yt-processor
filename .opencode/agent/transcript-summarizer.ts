@@ -6,6 +6,14 @@ interface SummaryResult {
 }
 
 function generateKeyPointsSummary(transcript: string, videoTitle: string): string {
+  // Validate inputs
+  if (!transcript || typeof transcript !== 'string') {
+    return "Unable to generate summary: invalid transcript"
+  }
+  if (!videoTitle || typeof videoTitle !== 'string') {
+    return "Unable to generate summary: invalid video title"
+  }
+
   // Extract key points from transcript
   const sentences = transcript.split('.').filter(s => s.trim().length > 20)
   
@@ -34,6 +42,14 @@ function generateKeyPointsSummary(transcript: string, videoTitle: string): strin
 }
 
 function generateDetailedSummary(transcript: string, videoTitle: string): string {
+  // Validate inputs
+  if (!transcript || typeof transcript !== 'string') {
+    return "Unable to generate summary: invalid transcript"
+  }
+  if (!videoTitle || typeof videoTitle !== 'string') {
+    return "Unable to generate summary: invalid video title"
+  }
+
   // Create a more comprehensive summary
   const words = transcript.split(' ')
   const targetLength = Math.min(300, Math.floor(words.length * 0.3)) // 30% or 300 words max
@@ -64,6 +80,17 @@ function generateDetailedSummary(transcript: string, videoTitle: string): string
 }
 
 function generateGuidedSummary(transcript: string, videoTitle: string, guidance: string): string {
+  // Validate inputs
+  if (!transcript || typeof transcript !== 'string') {
+    return "Unable to generate summary: invalid transcript"
+  }
+  if (!videoTitle || typeof videoTitle !== 'string') {
+    return "Unable to generate summary: invalid video title"
+  }
+  if (!guidance || typeof guidance !== 'string') {
+    return "Unable to generate summary: invalid guidance"
+  }
+
   // Generate summary based on user guidance
   const guidanceLower = guidance.toLowerCase()
   

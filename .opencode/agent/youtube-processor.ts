@@ -1,8 +1,9 @@
 import { tool } from "@opencode-ai/plugin"
 import fs from 'fs/promises'
 import path from 'path'
-import youtubeTranscript from '../tool/youtube-transcript'
-import transcriptSummarizer from './transcript-summarizer'
+import youtubeTranscript from '../tool/youtube-transcript.js'
+import transcriptSummarizer from './transcript-summarizer.js'
+import { sanitizeTitle } from '../utils/sanitize.js'
 
 interface YouTubeVideoInfo {
   video_id: string
@@ -27,10 +28,12 @@ function extractVideoId(input: string): string {
   
   // Handle various YouTube URL formats
   const urlPatterns = [
-    // Standard YouTube URLs
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|m\.youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
+    // Standard YouTube URLs (handles query params in any order)
+    /(?:youtube\.com\/watch\?.*?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|m\.youtube\.com\/watch\?.*?v=)([a-zA-Z0-9_-]{11})/,
     // YouTube shorts
     /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+    // YouTube live streams and other formats
+    /youtube\.com\/live\/([a-zA-Z0-9_-]{11})/,
   ]
   
   for (const pattern of urlPatterns) {
@@ -43,14 +46,7 @@ function extractVideoId(input: string): string {
   throw new Error(`Invalid YouTube URL or video ID: "${input}". Expected format: https://www.youtube.com/watch?v=VIDEO_ID or direct 11-character video ID.`)
 }
 
-function sanitizeTitle(title: string): string {
-  return title
-    .replace(/^\[/, '')
-    .replace(/\]$/, '')
-    .replace(/:/g, '-')
-    .replace(/[<>:"/\\|?*]/g, '') // Remove invalid filename characters
-    .trim()
-}
+
 
 function generateObsidianMarkdown(data: {
   title: string
@@ -117,8 +113,13 @@ async function saveMarkdownFile(content: string, filename: string, directory: st
       await fs.access(filePath)
       // File exists, we'll need to handle this in the main logic
       return filePath
-    } catch {
-      // File doesn't exist, we can proceed
+    } catch (error) {
+      if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+        // File doesn't exist, proceed
+      } else {
+        // Permission or other error
+        throw new Error(`Cannot access file path: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      }
     }
     
     // Write the file
@@ -140,14 +141,43 @@ export default tool({
   },
   async execute(args, context): Promise<string> {
     try {
-      const { youtube_input, user_comments, output_location, summary_guidance, overwrite_file } = args
-      
+      let { youtube_input, user_comments, output_location, summary_guidance, overwrite_file } = args
+
+      // Validate optional parameters
+      if (user_comments !== undefined && typeof user_comments !== 'string') {
+        throw new Error('user_comments must be a string')
+      }
+      if (output_location !== undefined && typeof output_location !== 'string') {
+        throw new Error('output_location must be a string')
+      }
+      if (summary_guidance !== undefined) {
+        if (typeof summary_guidance !== 'string') {
+          throw new Error('summary_guidance must be a string')
+        }
+        summary_guidance = summary_guidance.trim()
+        if (summary_guidance.length === 0) {
+          summary_guidance = undefined
+        }
+      }
+      if (overwrite_file !== undefined && typeof overwrite_file !== 'boolean') {
+        throw new Error('overwrite_file must be a boolean')
+      }
+
       // Step 1: Extract video ID
       const videoId = extractVideoId(youtube_input)
       
       // Step 2: Get video metadata and transcript
       const youtubeResult = await youtubeTranscript.execute({ video_id: videoId }, context)
-      const videoInfo: YouTubeVideoInfo = JSON.parse(youtubeResult)
+      let videoInfo: YouTubeVideoInfo
+      try {
+        videoInfo = JSON.parse(youtubeResult)
+        // Validate structure
+        if (!videoInfo.video_id || !videoInfo.title) {
+          throw new Error('Invalid response structure from YouTube tool')
+        }
+      } catch (error) {
+        throw new Error(`Failed to parse YouTube response: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      }
       
       // Step 3: Generate summary if transcript is available
       let summary: string | undefined
@@ -157,8 +187,17 @@ export default tool({
           video_title: videoInfo.title,
           summary_guidance: summary_guidance
         }, context)
-        
-        const summaryData: SummaryResult = JSON.parse(summaryResult)
+
+        let summaryData: SummaryResult
+        try {
+          summaryData = JSON.parse(summaryResult)
+          // Validate structure
+          if (!summaryData.summary || !summaryData.summary_type) {
+            throw new Error('Invalid response structure from summary tool')
+          }
+        } catch (error) {
+          throw new Error(`Failed to parse summary response: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        }
         summary = summaryData.summary
       }
       
