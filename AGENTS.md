@@ -70,7 +70,7 @@ bd create "Session: <your task description>" --status in_progress
 
 **Example:**
 ```bash
-bd create "Session: Fix 3 critical issues from codebase review" --status in_progress
+bd create "Session: Fix critical issues from review" --status in_progress
 ```
 
 **Purpose:** Creates a session issue that becomes your work container and context anchor.
@@ -96,20 +96,19 @@ bd create "<issue title>" -p <priority> -d "<description>"
 
 **Examples:**
 ```bash
-bd create "Add npm scripts to package.json" -p 0 -d "Missing: build, dev, test, type-check scripts. Blocks testing."
+bd create "Add missing build scripts" -p 0 -d "No build/dev/test scripts defined in package.json"
 
-bd create "Protect JSON.parse calls with try-catch" -p 0 -d "4 unprotected locations can crash on malformed JSON. See youtube-processor.ts lines 150, 161"
+bd create "Protect JSON.parse calls" -p 0 -d "Unprotected JSON.parse can crash on malformed data"
 
-bd create "Enable TypeScript noImplicitAny" -p 1 -d "Currently disabled in tsconfig.json. Reduces type safety."
+bd create "Enable strict TypeScript settings" -p 1 -d "TypeScript config has relaxed settings reducing safety"
 
-bd create "Extract sanitizeTitle utility" -p 2 -d "Function duplicated in youtube-transcript.ts and youtube-processor.ts"
+bd create "Extract duplicate utility function" -p 2 -d "Common function duplicated across multiple files"
 ```
 
 **Important:**
 - File issues **immediately** when you discover them
 - Don't use markdown files or code comments for tracking
 - Include line numbers and file references for bugs
-- Link to CODEBASE_REVIEW.md for context
 - Use the priority mapping below
 
 ---
@@ -233,25 +232,11 @@ Use this mapping when filing issues to assign the correct priority:
 | **MEDIUM** | 2 | `-p 2` | Code duplication, edge cases, docs gaps | Technical debt or maintenance needs |
 | **LOW** | 3 | `-p 3` | Polish, version updates, optional features | Enhancement without blocking value |
 
-### Examples from Codebase Review
 
-```bash
-bd create "Missing npm scripts" -p 0 -d "Blocks testing - Issue #1 from CODEBASE_REVIEW.md"
-
-bd create "Unprotected JSON.parse calls" -p 0 -d "App crashes on malformed JSON - Issue #2 from CODEBASE_REVIEW.md"
-
-bd create "Fix module resolution error" -p 0 -d "Test suite broken - Issue #3 from CODEBASE_REVIEW.md"
-
-bd create "Enable TypeScript noImplicitAny" -p 1 -d "Improves type safety - Issue #4 from CODEBASE_REVIEW.md"
-
-bd create "Add debug logging to fetch" -p 1 -d "Difficult to troubleshoot - Issue #5 from CODEBASE_REVIEW.md"
-
-bd create "Extract sanitizeTitle utility" -p 2 -d "Code duplication - Issue #17 from CODEBASE_REVIEW.md"
-```
 
 ---
 
-## Handling Discoveries & Codebase Review
+## Handling Discoveries
 
 ### When You Discover Issues
 
@@ -262,80 +247,6 @@ bd create "Extract sanitizeTitle utility" -p 2 -d "Code duplication - Issue #17 
 - ❌ Verbal notes
 
 **Why:** Keeps work tracking centralized and actionable in bd.
-
----
-
-### IMMEDIATE ACTION: Codebase Review Findings
-
-A comprehensive codebase review identified **31 issues** in CODEBASE_REVIEW.md:
-- **3 Critical** (p:0) - Must fix immediately
-- **9 Important** (p:1) - Fix before production
-- **14 Medium** (p:2) - Improve quality
-- **5 Low** (p:3) - Nice to have
-
-**Your task:** File these as bd issues immediately.
-
-**Template:**
-```bash
-bd create "<issue-title>" -p <priority> -d "<description from CODEBASE_REVIEW.md>"
-```
-
-### Critical Issues to File First (Priority 0)
-
-```bash
-# Issue #1: Missing npm scripts
-bd create "Add npm scripts to package.json" -p 0 -d "CRITICAL: No build, dev, test, type-check scripts defined. Blocks testing and development workflow. See CODEBASE_REVIEW.md Issue #1."
-
-# Issue #2: Unprotected JSON.parse calls  
-bd create "Protect JSON.parse calls with try-catch" -p 0 -d "CRITICAL: 4 unprotected JSON.parse calls can crash on malformed data. Locations: youtube-processor.ts (150, 161), transcript-summarizer.ts (101, 121). See CODEBASE_REVIEW.md Issue #2."
-
-# Issue #3: Module resolution error
-bd create "Fix @opencode-ai/plugin module resolution" -p 0 -d "CRITICAL: test-agents.js fails with ERR_MODULE_NOT_FOUND. Cannot run tests. See CODEBASE_REVIEW.md Issue #3."
-```
-
-### Important Issues to File (Priority 1)
-
-```bash
-bd create "Enable TypeScript noImplicitAny" -p 1 -d "IMPORTANT: tsconfig.json has noImplicitAny: false reducing type safety. See CODEBASE_REVIEW.md Issue #4."
-
-bd create "Add debug logging to fetch operations" -p 1 -d "IMPORTANT: Silent failures in transcript retrieval make troubleshooting difficult. See CODEBASE_REVIEW.md Issue #5."
-
-bd create "Add runtime parameter validation" -p 1 -d "IMPORTANT: Optional parameters not validated when provided. See CODEBASE_REVIEW.md Issue #6."
-
-bd create "Fix file operation error handling" -p 1 -d "IMPORTANT: Permission errors treated as 'file not found'. Need error code checking. See CODEBASE_REVIEW.md Issue #7."
-
-bd create "Improve URL extraction patterns" -p 1 -d "IMPORTANT: Regex assumes exactly 11-character video IDs. Doesn't handle all URL variations. See CODEBASE_REVIEW.md Issue #8."
-
-bd create "Add null/undefined checks in summarizer" -p 1 -d "IMPORTANT: String operations without defensive checks can crash on edge cases. See CODEBASE_REVIEW.md Issue #9."
-```
-
-### Linking Related Issues
-
-If Issue A blocks Issue B, link them:
-
-```bash
-bd dep add yt-2 yt-1
-```
-
-Example: npm scripts (yt-1) blocks test execution (yt-3):
-```bash
-bd dep add yt-3 yt-1
-```
-
-Visualize the dependency tree:
-```bash
-bd dep tree yt-3
-```
-
-### Tracking Multi-Issue Work
-
-Create a session for working through the codebase review:
-
-```bash
-bd create "Session: File codebase review issues and fix critical bugs" --status in_progress
-```
-
-This creates a session (e.g., yt-47) that becomes your context anchor.
 
 ---
 
@@ -449,59 +360,7 @@ bd list --assignee me   # My work items
 - ✅ **Other agents see your work** - Enables coordination without real-time communication
 - ✅ **Automatic git sync** - Work persists in version control
 
----
 
-## Build/Test Commands
-
-**Current Status:**
-- ❌ **BROKEN** - No npm scripts defined in package.json (See Issue #1, CODEBASE_REVIEW.md)
-- ⚠️ **PARTIALLY WORKING** - TypeScript compiles but test suite cannot run
-- 📋 **Reference:** CODEBASE_REVIEW.md for complete issue analysis
-
-### Workaround Commands (Until npm scripts are added)
-
-```bash
-# Install dependencies
-npm install
-
-# Manual type check (workaround - use `npm run type-check` after fix)
-npx tsc --noEmit
-
-# Manual build (workaround - use `npm run build` after fix)
-npx tsc
-
-# Manual linting (if eslint is configured)
-npx eslint .
-
-# Manual formatting (if prettier is configured)
-npx prettier --write .
-```
-
-### After Fixing Issue #1 (Add npm scripts)
-
-Once `npm run build`, `npm run dev`, `npm run test`, `npm run type-check` are added to package.json, use:
-
-```bash
-npm install          # Install dependencies
-npm run build        # Compile TypeScript
-npm run dev          # Watch mode for development
-npm test             # Run test suite
-npm run type-check   # Type checking without emitting
-```
-
-### For Agents Working on Build Commands
-
-1. When fixing **yt-1** (Add npm scripts):
-   - Update package.json with scripts
-   - Verify: `npm test` should work after fix
-   - Close issue: `bd close yt-1`
-
-2. If build commands fail:
-   - File new issue with details
-   - Link to related issues
-   - Track in bd
-
----
 
 ## Code Style Guidelines
 
@@ -515,9 +374,7 @@ npm run type-check   # Type checking without emitting
 - **Line length**: Follow common JavaScript conventions (100-120 characters)
 - **Dependencies**: Add new dependencies to package.json
 - **File organization**: Extract shared utilities to avoid duplication
-  - **Reference:** CODEBASE_REVIEW.md Issue #17 - `sanitizeTitle()` is duplicated in 2 files
 - **Input validation**: Validate all user inputs, don't assume data structure
-  - **Reference:** CODEBASE_REVIEW.md Issue #6, #29 for validation examples
 
 ---
 
@@ -566,6 +423,5 @@ export BEADS_PROJECT_ID="<project-id>"
 
 **Database location:** `.beads/beads.db`  
 **Documentation:** https://github.com/steveyegge/beads  
-**Codebase review:** CODEBASE_REVIEW.md (31 identified issues)  
 
 Good luck! 🚀
