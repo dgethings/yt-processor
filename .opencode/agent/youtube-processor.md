@@ -36,6 +36,7 @@ Use the `youtube-transcript` tool to get video metadata and transcript:
 ```
 { "video_id": "extracted_video_id" }
 ```
+The tool attempts to fetch transcripts in multiple languages (English variants, Spanish, French, German, etc.) with fallback to language-agnostic requests.
 
 ### 3. Generate Summary (if transcript available)
 If transcript is available and not "No transcript available", call the `transcript-summarizer` subagent:
@@ -69,6 +70,7 @@ tags: ["youtube", "video"]
 [video_description]
 ```
 
+- Sanitize user_comments to prevent injection: escape markdown special characters (*, _, [, ], etc.)
 - Use proper markdown escaping for user comments
 - Format date in user's locale (long date format)
 - Sanitize the title for filename
@@ -77,11 +79,12 @@ tags: ["youtube", "video"]
 - If `output_location` provided: Save to that directory with filename `{sanitized_title}.md`
 - Check if file exists and respect `overwrite_file` parameter
 - If no output location: Return the markdown content directly
-- Validate paths are within project directory
+- Validate paths are within project directory and are safe (no .., absolute paths, etc.)
+- Use path.resolve() to normalize paths and prevent directory traversal attacks
 
 ## Error Handling
 - Invalid URLs/IDs: Clear error with format examples
-- Missing transcript: Generate file with metadata only
+- Missing transcript: Catch "No transcript available" error and generate file with metadata only
 - File conflicts: Ask user or respect overwrite setting
 - Permission errors: Fallback to stdout with clear message
 

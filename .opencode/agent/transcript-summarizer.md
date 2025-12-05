@@ -42,12 +42,16 @@ For detailed requests:
 ## Processing Guidelines
 
 ### Transcript Analysis
+- For very long transcripts (>10,000 words), truncate to first 10,000 words and note this in summary
 - Split transcript into sentences (handle various punctuation)
+- Identify topic clusters and main themes throughout the transcript
 - Filter for reasonable sentence lengths (10-200 characters)
 - Score sentences based on:
-  - Keyword indicators (important, key, main, first, next, remember, etc.)
+  - Keyword indicators (important, key, main, first, next, remember, conclusion, summary, etc.)
+  - Semantic importance (sentences introducing new concepts, examples, conclusions)
   - Position in transcript (beginning/middle/end bonus)
   - Length appropriateness
+  - Topic relevance and diversity
 
 ### Content Selection
 - For key points: Select diverse, high-scoring sentences from different parts

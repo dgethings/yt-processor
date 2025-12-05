@@ -79,8 +79,8 @@ async function getYouTubeTranscript(videoId) {
         console.debug(`Transcript fetch failed for fallback method: ${error instanceof Error ? error.message : String(error)}`);
         // Continue to fallback
     }
-    // If all methods fail, return a placeholder message instead of throwing
-    return "No transcript available for this video. The video may not have captions or they may not be accessible through the public API.";
+    // If all methods fail, throw an error for consistency
+    throw new Error('No transcript available for this video. The video may not have captions or they may not be accessible through the public API.');
 }
 async function getYouTubeMetadata(videoId) {
     validateYouTubeVideoId(videoId);

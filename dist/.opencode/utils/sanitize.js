@@ -3,6 +3,7 @@
  */
 export function sanitizeTitle(title) {
     return title
+        .normalize('NFC') // Normalize Unicode characters
         .replace(/^\[/, '') // Remove leading brackets
         .replace(/\]$/, '') // Remove trailing brackets
         .replace(/:/g, '-') // Replace colons with hyphens
@@ -12,6 +13,7 @@ export function sanitizeTitle(title) {
         .replace(/[\u{1F680}-\u{1F6FF}]/gu, '') // Remove transport & map symbols
         .replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '') // Remove flags
         .replace(/[\u{2600}-\u{26FF}]/gu, '') // Remove misc symbols
+        .replace(/[\u{2000}-\u{206F}]/gu, '') // Remove general punctuation
         .replace(/\s+/g, ' ') // Normalize whitespace
         .trim()
         .substring(0, 100); // Limit length to 100 chars for filesystem compatibility
