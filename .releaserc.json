@@ -1,4 +1,5 @@
 {
+  "repositoryUrl": "https://github.com/dgethings/yt-processor.git",
   "branches": ["main"],
   "plugins": [
     "@semantic-release/commit-analyzer",
