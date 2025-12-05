@@ -23,49 +23,32 @@ A pair of OpenCode agents that summarise a given YouTube video and saves the res
 
 ## Installation
 
-### Step 1: Install Dependencies (Optional)
+To install the YouTube processor agents and tools, you must manually copy the `.opencode` directory to the appropriate OpenCode configuration directory:
 
-If you want to run tests or develop locally:
+### Global Installation (Available System-Wide)
 
-```bash
-npm install
-```
-
-### Step 2: Install Agents and Tools
-
-The YouTube processor agents and tools cannot be installed via npm. You must manually copy them to the appropriate OpenCode configuration directory:
-
-#### Global Installation (Available System-Wide)
-
-Copy the agent and tool directories to your global OpenCode config:
+Copy the `.opencode` directory to your global OpenCode config:
 
 ```bash
 # Create the config directory if it doesn't exist
-mkdir -p ~/.config/opencode/agent
-mkdir -p ~/.config/opencode/tool
+mkdir -p ~/.config/opencode
 
-# Copy the agents and tools
-cp -r .opencode/agent/* ~/.config/opencode/agent/
-cp -r .opencode/tool/* ~/.config/opencode/tool/
+# Copy the .opencode directory
+cp -r .opencode ~/.config/opencode/
 ```
 
 If you already have other agents or tools installed, the directories will be merged.
 
-#### Project Installation (Available in Specific Project)
+### Project Installation (Available in Specific Project)
 
-Copy the agent and tool directories to a project's `.opencode` directory:
+Copy the `.opencode` directory to a project's `.opencode` directory:
 
 ```bash
 # Navigate to your target project
 cd /path/to/your/project
 
-# Create the .opencode directory if it doesn't exist
-mkdir -p .opencode/agent
-mkdir -p .opencode/tool
-
-# Copy the agents and tools
-cp -r /path/to/yt-processor/.opencode/agent/* .opencode/agent/
-cp -r /path/to/yt-processor/.opencode/tool/* .opencode/tool/
+# Copy the .opencode directory
+cp -r /path/to/yt-processor/.opencode .opencode
 ```
 
 If your project already has a `.opencode` directory, the contents will be merged.
