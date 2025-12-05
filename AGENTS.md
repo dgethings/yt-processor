@@ -8,6 +8,20 @@ You will use the `bd` command-line tool for all work tracking, task management, 
 
 This section explains how you should work on this project. Follow these steps in order for each task.
 
+### Planning vs Build Mode Workflow
+
+**When in planning mode:** You must use beads to create the issues found as instructed by the user. This includes:
+- Creating session issues for work planning
+- Filing issues for discovered problems or requirements
+- Linking dependencies between issues
+- Setting priorities and descriptions
+
+**When in build mode:** You must use beads as part of the implementation of the issues. This includes:
+- Claiming issues with `bd update --status in_progress`
+- Updating status as work progresses
+- Closing completed issues with `bd close`
+- Committing changes with git
+
 ### What is `bd` and Why Use It?
 
 `bd` is a **dependency-aware issue tracker** that:
