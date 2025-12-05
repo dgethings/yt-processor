@@ -23,26 +23,69 @@ A pair of OpenCode agents that summarise a given YouTube video and saves the res
 
 ## Installation
 
+### Step 1: Install Dependencies (Optional)
+
+If you want to run tests or develop locally:
+
 ```bash
 npm install
 ```
+
+### Step 2: Install Agents and Tools
+
+The YouTube processor agents and tools cannot be installed via npm. You must manually copy them to the appropriate OpenCode configuration directory:
+
+#### Global Installation (Available System-Wide)
+
+Copy the agent and tool directories to your global OpenCode config:
+
+```bash
+# Create the config directory if it doesn't exist
+mkdir -p ~/.config/opencode/agent
+mkdir -p ~/.config/opencode/tool
+
+# Copy the agents and tools
+cp -r .opencode/agent/* ~/.config/opencode/agent/
+cp -r .opencode/tool/* ~/.config/opencode/tool/
+```
+
+If you already have other agents or tools installed, the directories will be merged.
+
+#### Project Installation (Available in Specific Project)
+
+Copy the agent and tool directories to a project's `.opencode` directory:
+
+```bash
+# Navigate to your target project
+cd /path/to/your/project
+
+# Create the .opencode directory if it doesn't exist
+mkdir -p .opencode/agent
+mkdir -p .opencode/tool
+
+# Copy the agents and tools
+cp -r /path/to/yt-processor/.opencode/agent/* .opencode/agent/
+cp -r /path/to/yt-processor/.opencode/tool/* .opencode/tool/
+```
+
+If your project already has a `.opencode` directory, the contents will be merged.
 
 ## Setup
 
 ### Prerequisites
 
 1. **YouTube Data API v3 Key**: Required for fetching video metadata
-   - Go to [Google Cloud Console](https://console.cloud.google.com/)
-   - Create a new project or select an existing one
-   - Enable the YouTube Data API v3
-   - Create credentials (API Key)
-   - Copy your API key
+    - Go to [Google Cloud Console](https://console.cloud.google.com/)
+    - Create a new project or select an existing one
+    - Enable the YouTube Data API v3
+    - Create credentials (API Key)
+    - Copy your API key
 
 2. **Environment Configuration**:
 
 ```bash
 export YOUTUBE_API_KEY="your_api_key_here"
-   ```
+    ```
 
 Or create a `.env` file:
 
@@ -54,7 +97,19 @@ YOUTUBE_API_KEY=your_api_key_here
 
 At the time of writing Google has a generous free quota for the YouTube API key. They have the right to change it anytime and I have no control on it if they do.
 
+### Verification
+
+After installation, verify the agents are properly installed by running:
+
+```bash
+opencode --help
+```
+
+You should see the `youtube-processor` and `transcript-summarizer` agents listed.
+
 ## Usage
+
+See [AGENT_USAGE.md](AGENT_USAGE.md) for detailed usage examples and API documentation for the YouTube processor agents.
 
 ## Output Format
 
