@@ -112,7 +112,7 @@ async function getYouTubeMetadata(videoId: string): Promise<{ title: string; des
       throw new Error(`Failed to fetch metadata: ${response.statusText}`)
     }
     
-    const data: YouTubeApiResponse = await response.json()
+    const data = await response.json() as YouTubeApiResponse
     
     if (!data.items || data.items.length === 0) {
       throw new Error(`Video not found: ${videoId}`)
@@ -143,17 +143,19 @@ export default tool({
   args: {
     video_id: tool.schema.string().describe("YouTube video ID to fetch transcript and metadata for")
   },
-  async execute(args): Promise<YouTubeVideoInfo> {
+  async execute(args, context): Promise<string> {
     try {
       const { title, description } = await getYouTubeMetadata(args.video_id)
       const transcript = await getYouTubeTranscript(args.video_id)
       
-      return {
+      const result: YouTubeVideoInfo = {
         video_id: args.video_id,
         title,
         transcript,
         description
       }
+      
+      return JSON.stringify(result)
     } catch (error) {
       throw new Error(`YouTube tool failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
