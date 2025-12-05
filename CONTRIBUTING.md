@@ -224,12 +224,16 @@ yt-processor/
 
 ## Release Process
 
-Releases are managed by project maintainers:
+Releases are automated using semantic-release and GitHub Actions:
 
-1. Update version in `package.json`
-2. Update CHANGELOG.md (if present)
-3. Create git tag
-4. Publish to npm (if applicable)
+1. Push commits following conventional commit format to main branch
+2. GitHub Actions workflow automatically runs tests and builds
+3. semantic-release determines version bump based on commit types and:
+   - Updates CHANGELOG.md
+   - Creates git tag
+   - Creates GitHub release
+
+No manual version updates are needed. All releases are triggered by conventional commits.
 
 ## Community Guidelines
 

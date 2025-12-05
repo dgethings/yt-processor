@@ -194,11 +194,11 @@ bd update yt-1 --status open  # If blocked, reopen it
 bd close yt-1
 bd close yt-1 yt-2 yt-3  # Close multiple at once
 git add .
-git commit -m "feature/fix implemented and documented" # add relevant commit message to the change being
+git commit -m "feat: implement new feature"  # Use conventional commit format (see guidelines below)
 git push
 ```
 
-**Purpose:** Marks task complete and removes it from the work queue. And adds the changes to git
+**Purpose:** Marks task complete and removes it from the work queue. And adds the changes to git using conventional commits for automated versioning.
 
 ### Restoring Context Between Sessions
 
@@ -259,6 +259,52 @@ Use this mapping when filing issues to assign the correct priority:
 - **Dependencies**: Add new dependencies to package.json
 - **File organization**: Extract shared utilities to avoid duplication
 - **Input validation**: Validate all user inputs, don't assume data structure
+
+## Conventional Commit Guidelines
+
+This project uses [Conventional Commits](https://conventionalcommits.org/) for automated semantic versioning and changelog generation.
+
+### Commit Message Format
+
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+### Types
+
+- **feat**: A new feature
+- **fix**: A bug fix
+- **docs**: Documentation only changes
+- **style**: Changes that do not affect the meaning of the code (white-space, formatting, etc.)
+- **refactor**: A code change that neither fixes a bug nor adds a feature
+- **perf**: A code change that improves performance
+- **test**: Adding missing tests or correcting existing tests
+- **build**: Changes that affect the build system or external dependencies
+- **ci**: Changes to our CI configuration files and scripts
+- **chore**: Other changes that don't modify src or test files
+
+### Breaking Changes
+
+For breaking changes, add `!` after the type/scope and describe the change in the footer:
+
+```
+feat!: remove deprecated API
+
+BREAKING CHANGE: The API has been removed
+```
+
+### Examples
+
+- `feat: add user authentication`
+- `fix: resolve memory leak in data processing`
+- `docs: update README with installation instructions`
+- `refactor: simplify error handling logic`
+
+All commits must follow this format to trigger automated releases.
 
 ## Collaboration & Agent Coordination
 
