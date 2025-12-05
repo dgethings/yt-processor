@@ -1,5 +1,8 @@
 import { tool } from "@opencode-ai/plugin"
+import { z } from 'zod'
 import { sanitizeTitle } from '../utils/sanitize.js'
+
+const DEBUG = process.env.DEBUG === 'yt-processor'
 
 interface YouTubeVideoInfo {
   video_id: string
@@ -8,14 +11,16 @@ interface YouTubeVideoInfo {
   description: string
 }
 
-interface YouTubeApiResponse {
-  items: Array<{
-    snippet: {
-      title: string
-      description: string
-    }
-  }>
-}
+const YouTubeApiResponseSchema = z.object({
+  items: z.array(z.object({
+    snippet: z.object({
+      title: z.string(),
+      description: z.string()
+    })
+  }))
+})
+
+type YouTubeApiResponse = z.infer<typeof YouTubeApiResponseSchema>
 
 function validateYouTubeVideoId(videoId: string): void {
   if (!videoId || typeof videoId !== 'string') {
@@ -52,11 +57,14 @@ function parseTranscriptXML(xmlText: string): string {
 
 async function getYouTubeTranscript(videoId: string): Promise<string> {
   validateYouTubeVideoId(videoId)
-  
+
+  if (DEBUG) console.log(`[youtube-transcript] Fetching transcript for video ${videoId}`)
+
   // Try multiple approaches to get transcript
   
   // Method 1: Try direct timedtext endpoint with different languages
-  const languages = ['en', 'en-US', 'en-GB']
+  // Include common languages and auto-generated captions (empty lang param)
+  const languages = ['', 'en', 'en-US', 'en-GB', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ja', 'ko', 'zh-CN', 'zh-TW', 'ar', 'hi']
   
   for (const lang of languages) {
     try {
@@ -115,7 +123,7 @@ async function getYouTubeMetadata(videoId: string): Promise<{ title: string; des
       throw new Error(`Failed to fetch metadata: ${response.statusText}`)
     }
     
-    const data = await response.json() as YouTubeApiResponse
+    const data = YouTubeApiResponseSchema.parse(await response.json())
     
     if (!data.items || data.items.length === 0) {
       throw new Error(`Video not found: ${videoId}`)

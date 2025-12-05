@@ -1,11 +1,11 @@
 {
   "name": "yt-processor",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "YouTube video transcript and metadata tool",
   "type": "module",
   "dependencies": {
-    "@opencode-ai/plugin": "^1.0.0",
-    "zod": "^4.0.0"
+    "@opencode-ai/plugin": "1.0.0",
+    "zod": "4.0.0"
   },
   "scripts": {
     "build": "tsc",
@@ -14,7 +14,7 @@
     "type-check": "tsc --noEmit"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "typescript": "^5.0.0"
+    "@types/node": "20.0.0",
+    "typescript": "5.0.0"
   }
 }

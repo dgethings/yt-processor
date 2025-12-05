@@ -14,31 +14,105 @@ function generateKeyPointsSummary(transcript: string, videoTitle: string): strin
     return "Unable to generate summary: invalid video title"
   }
 
-  // Extract key points from transcript
-  const sentences = transcript.split('.').filter(s => s.trim().length > 20)
-  
-  // Simple heuristic: look for sentences with indicators of importance
+  // Improved sentence splitting (handle multiple punctuation marks)
+  const sentences = transcript
+    .split(/[.!?]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 10 && s.length < 200) // Filter reasonable sentence lengths
+
+  if (sentences.length === 0) {
+    return "Unable to extract meaningful sentences from transcript."
+  }
+
+  // Expanded keyword indicators with better coverage
   const keyPointIndicators = [
-    'important', 'key', 'main', 'primary', 'essential', 'crucial',
-    'first', 'second', 'third', 'finally', 'in conclusion',
-    'remember', 'note that', 'keep in mind', 'the point is'
+    // Importance indicators
+    'important', 'key', 'main', 'primary', 'essential', 'crucial', 'critical', 'significant',
+    'fundamental', 'core', 'central', 'major', 'vital', 'paramount',
+
+    // Sequence indicators
+    'first', 'second', 'third', 'fourth', 'fifth', 'next', 'then', 'after', 'before',
+    'finally', 'lastly', 'in conclusion', 'to conclude', 'to summarize', 'in summary',
+
+    // Attention indicators
+    'remember', 'note that', 'keep in mind', 'the point is', 'here\'s the thing',
+    'what matters', 'what\'s important', 'pay attention', 'focus on',
+
+    // Content indicators
+    'let\'s talk about', 'we\'ll cover', 'we\'ll discuss', 'we\'ll explore',
+    'the goal is', 'the objective is', 'the purpose is', 'the aim is',
+
+    // Action indicators
+    'you need to', 'you should', 'make sure', 'ensure that', 'don\'t forget'
   ]
-  
-  const keyPoints = sentences
-    .filter(sentence => 
-      keyPointIndicators.some(indicator => 
-        sentence.toLowerCase().includes(indicator)
-      )
+
+  // Score sentences based on keyword matches and position
+  const scoredSentences = sentences.map((sentence, index) => {
+    const lowerSentence = sentence.toLowerCase()
+    let score = 0
+
+    // Keyword matching score
+    const keywordMatches = keyPointIndicators.filter(indicator =>
+      lowerSentence.includes(indicator)
+    ).length
+    score += keywordMatches * 3
+
+    // Position bonus (sentences at beginning/middle/end are more important)
+    const positionRatio = index / sentences.length
+    if (positionRatio < 0.2) score += 2 // Beginning
+    else if (positionRatio > 0.8) score += 2 // End
+    else if (positionRatio > 0.4 && positionRatio < 0.6) score += 1 // Middle
+
+    // Length bonus (moderate length sentences)
+    const wordCount = sentence.split(' ').length
+    if (wordCount >= 8 && wordCount <= 25) score += 1
+
+    return { sentence, score, index }
+  })
+
+  // Sort by score descending, then by position
+  scoredSentences.sort((a, b) => {
+    if (a.score !== b.score) return b.score - a.score
+    return a.index - b.index // Earlier sentences first for same score
+  })
+
+  // Take top sentences, ensuring diversity
+  const selectedSentences: string[] = []
+  const usedSentenceIndices = new Set<number>()
+
+  for (const item of scoredSentences) {
+    // Avoid selecting sentences too close to already selected ones
+    const tooClose = Array.from(usedSentenceIndices).some(prevIndex =>
+      Math.abs(item.index - prevIndex) < 3 // Minimum 3 sentences apart
     )
-    .slice(0, 5) // Limit to top 5 key points
-    .map(point => point.trim())
-  
-  if (keyPoints.length === 0) {
-    // Fallback: take first few sentences as summary
+
+    if (!tooClose && selectedSentences.length < 5) {
+      selectedSentences.push(item.sentence)
+      usedSentenceIndices.add(item.index)
+    }
+  }
+
+  // If no high-scoring sentences found, use a more comprehensive approach
+  if (selectedSentences.length === 0) {
+    // Take sentences from different parts of the transcript
+    const totalSentences = sentences.length
+    const indices = [
+      0, // First sentence
+      Math.floor(totalSentences * 0.25), // Early middle
+      Math.floor(totalSentences * 0.5), // Middle
+      Math.floor(totalSentences * 0.75), // Late middle
+      totalSentences - 1 // Last sentence
+    ].filter((idx, pos, arr) => arr.indexOf(idx) === pos) // Remove duplicates
+
+    selectedSentences.push(...indices.map(idx => sentences[idx]).filter(Boolean))
+  }
+
+  // Ensure we have at least some content
+  if (selectedSentences.length === 0) {
     return sentences.slice(0, 3).join('. ').trim() + '.'
   }
-  
-  return `## Key Points\n\n${keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}`
+
+  return `## Key Points\n\n${selectedSentences.map((point, index) => `${index + 1}. ${point}`).join('\n')}`
 }
 
 function generateDetailedSummary(transcript: string, videoTitle: string): string {
@@ -52,7 +126,18 @@ function generateDetailedSummary(transcript: string, videoTitle: string): string
 
   // Create a more comprehensive summary
   const words = transcript.split(' ')
-  const targetLength = Math.min(300, Math.floor(words.length * 0.3)) // 30% or 300 words max
+  const transcriptLength = words.length
+
+  // Adaptive target length based on transcript size
+  let targetLength: number
+  if (transcriptLength < 500) {
+    targetLength = Math.floor(transcriptLength * 0.4) // 40% for short transcripts
+  } else if (transcriptLength < 2000) {
+    targetLength = Math.min(400, Math.floor(transcriptLength * 0.3)) // 30% or 400 words max
+  } else {
+    targetLength = Math.min(500, Math.floor(transcriptLength * 0.2)) // 20% or 500 words max for very long transcripts
+  }
+
   const sentences = transcript.split('.').filter(s => s.trim().length > 10)
   
   // Take sentences from beginning, middle, and end for balanced summary

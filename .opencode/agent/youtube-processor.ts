@@ -5,6 +5,8 @@ import youtubeTranscript from '../tool/youtube-transcript.js'
 import transcriptSummarizer from './transcript-summarizer.js'
 import { sanitizeTitle } from '../utils/sanitize.js'
 
+const DEBUG = process.env.DEBUG === 'yt-processor'
+
 interface YouTubeVideoInfo {
   video_id: string
   title: string
@@ -48,6 +50,24 @@ function extractVideoId(input: string): string {
 
 
 
+function escapeMarkdown(text: string): string {
+  // Escape common markdown special characters
+  return text
+    .replace(/\\/g, '\\\\')    // Escape backslashes first
+    .replace(/\*/g, '\\*')     // Escape asterisks
+    .replace(/_/g, '\\_')      // Escape underscores
+    .replace(/`/g, '\\`')      // Escape backticks
+    .replace(/\[/g, '\\[')     // Escape square brackets
+    .replace(/\]/g, '\\]')     // Escape square brackets
+    .replace(/\(/g, '\\(')     // Escape parentheses
+    .replace(/\)/g, '\\)')     // Escape parentheses
+    .replace(/#/g, '\\#')      // Escape hash symbols
+    .replace(/\+/g, '\\+')     // Escape plus signs
+    .replace(/-/g, '\\-')      // Escape minus signs
+    .replace(/\./g, '\\.')     // Escape dots
+    .replace(/!/g, '\\!')      // Escape exclamation marks
+}
+
 function generateObsidianMarkdown(data: {
   title: string
   videoId: string
@@ -79,7 +99,7 @@ tags: ["youtube", "video"]
   if (data.userComments && data.userComments.trim()) {
     markdown += `# Your Comments
 
-${data.userComments.trim()}
+${escapeMarkdown(data.userComments.trim())}
 
 `
   }
@@ -165,8 +185,10 @@ export default tool({
 
       // Step 1: Extract video ID
       const videoId = extractVideoId(youtube_input)
-      
+      if (DEBUG) console.log(`[youtube-processor] Extracted video ID: ${videoId}`)
+
       // Step 2: Get video metadata and transcript
+      if (DEBUG) console.log(`[youtube-processor] Fetching metadata and transcript for ${videoId}`)
       const youtubeResult = await youtubeTranscript.execute({ video_id: videoId }, context)
       let videoInfo: YouTubeVideoInfo
       try {
@@ -182,6 +204,7 @@ export default tool({
       // Step 3: Generate summary if transcript is available
       let summary: string | undefined
       if (videoInfo.transcript && !videoInfo.transcript.includes("No transcript available")) {
+        if (DEBUG) console.log(`[youtube-processor] Generating summary for transcript (${videoInfo.transcript.length} chars)`)
         const summaryResult = await transcriptSummarizer.execute({
           transcript: videoInfo.transcript,
           video_title: videoInfo.title,
@@ -214,10 +237,23 @@ export default tool({
       
       // Step 5: Handle file output
       const filename = `${sanitizeTitle(videoInfo.title)}.md`
-      
+
       if (output_location) {
+        // Validate output location for security
+        const resolvedPath = path.resolve(output_location)
+        if (!resolvedPath.startsWith(process.cwd())) {
+          throw new Error('Output location must be within the project directory')
+        }
+
+        // Check if the directory exists and is accessible
+        try {
+          await fs.access(resolvedPath)
+        } catch {
+          throw new Error(`Output directory does not exist or is not accessible: ${output_location}`)
+        }
+
         // Save to specified location
-        const filePath = path.join(output_location, filename)
+        const filePath = path.join(resolvedPath, filename)
         
         // Check if file exists and handle overwrite
         try {

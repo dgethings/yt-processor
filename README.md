@@ -41,10 +41,66 @@ npm install
    export YOUTUBE_API_KEY="your_api_key_here"
    ```
 
-   Or create a `.env` file:
-   ```
-   YOUTUBE_API_KEY=your_api_key_here
-   ```
+    Or create a `.env` file:
+    ```
+    YOUTUBE_API_KEY=your_api_key_here
+    ```
+
+### API Quota and Limits
+
+The YouTube Data API v3 has the following quota and cost structure:
+
+- **Daily Quota**: 10,000 units per day for standard API keys
+- **Cost**: Free up to the daily quota limit
+- **Metadata Fetch**: 1 unit per video (title, description, etc.)
+- **Transcript Fetch**: 0 units (uses YouTube's timedtext endpoint, not the API)
+- **Quota Exceeded**: If you exceed the free quota, you'll need to purchase additional quota through Google Cloud
+
+**Monitoring Usage:**
+- Check your quota usage in the [Google Cloud Console](https://console.cloud.google.com/)
+- Navigate to APIs & Services → YouTube Data API v3 → Quotas
+- Monitor your daily usage to avoid unexpected costs
+
+**Cost Information:**
+YouTube Data API v3 is free for up to 10,000 units per day. If you need more quota, Google Cloud offers paid plans starting at $0.50 per 1,000 units (as of 2025 pricing).
+
+## Configuration
+
+### TypeScript Configuration
+
+The project uses TypeScript with the following key settings in `tsconfig.json`:
+
+- **Target**: ES2020 modules for modern JavaScript compatibility
+- **Module**: ESNext for native ES modules support
+- **Strict Mode**: Enabled for type safety (`strict: true`)
+- **noImplicitAny**: Currently disabled to allow gradual migration to stricter typing
+- **ES Module Interop**: Enabled for compatibility with CommonJS modules
+- **Declaration Files**: Generated in `dist/` directory
+
+### Build Output
+
+After running `npm run build` or `npx tsc`, the compiled JavaScript files are placed in the `dist/` directory:
+
+```
+dist/
+├── .opencode/
+│   ├── tool/
+│   │   └── youtube-transcript.js    # Compiled tool
+│   └── agent/
+│       ├── youtube-processor.js     # Main agent
+│       └── transcript-summarizer.js # Summarizer agent
+└── utils/
+    └── sanitize.js                  # Utility functions
+```
+
+### Integration with Other Projects
+
+To use this project in other applications:
+
+1. **As a dependency**: Add to your `package.json` and import the compiled JavaScript files
+2. **As source**: Copy the `.opencode/` directory and modify as needed
+3. **Environment**: Ensure `YOUTUBE_API_KEY` is available in the target environment
+4. **Dependencies**: Install required packages (`@opencode-ai/plugin`, `zod`)
 
 ## Usage
 
@@ -58,7 +114,7 @@ Complete workflow from YouTube URL to Obsidian markdown file:
 ```typescript
 import youtubeProcessor from './.opencode/agent/youtube-processor'
 
-// Basic usage
+// Basic usage (using Rick Astley's "Never Gonna Give You Up" as example)
 const result = await youtubeProcessor.execute({
   youtube_input: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
   user_comments: "This is a classic meme video!",
@@ -163,12 +219,25 @@ interface YouTubeVideoInfo {
 ```
 
 **Error Handling:**
-- Invalid video IDs throw validation errors
-- Missing API keys throw configuration errors
-- Network failures are handled gracefully
-- Videos without transcripts return a descriptive message
-- File conflicts prompt user for resolution
-- Graceful degradation when transcripts unavailable
+
+The agents provide detailed error messages and recovery guidance:
+
+| Error | Example Message | Cause | Solution |
+|-------|----------------|-------|----------|
+| **Invalid YouTube video ID format** | `Invalid YouTube URL or video ID: "invalid". Expected format: https://www.youtube.com/watch?v=VIDEO_ID or direct 11-character video ID.` | Malformed video ID or URL | Ensure ID is 11 chars (alphanumeric, `-`, `_`) or use a valid YouTube URL |
+| **Missing API key** | `YouTube tool failed: YOUTUBE_API_KEY environment variable not set` | `YOUTUBE_API_KEY` not configured | Run `export YOUTUBE_API_KEY="your_key"` or add to `.env` file |
+| **Video not found** | `YouTube tool failed: Video not found or not accessible` | Video is private, deleted, or doesn't exist | Verify video is public and URL/ID is correct |
+| **API quota exceeded** | `YouTube tool failed: quotaExceeded` | Daily API quota reached | Check [Google Cloud Console](https://console.cloud.google.com/) quota usage or wait for reset |
+| **Network failure** | `YouTube tool failed: fetch failed` | Connection issues or YouTube API down | Retry later or check internet connection |
+| **No transcript available** | `No transcript available for this video` | Video has no captions | File created with metadata only (no summary) |
+| **File already exists** | `File already exists at /path/to/file.md. Set overwrite_file=true to overwrite it.` | Output file exists and `overwrite_file` not set | Set `overwrite_file: true` or choose different output location |
+| **Permission denied** | `Cannot access file path: EACCES: permission denied` | No write access to output directory | Check directory permissions or choose different location |
+
+**Recovery Procedures:**
+- **API Issues**: Verify API key in Google Cloud Console and check quota usage
+- **Network Issues**: Wait and retry; check YouTube service status
+- **File Issues**: Ensure output directory exists and is writable
+- **Video Issues**: Confirm video is public and has correct ID
 
 ## Output Format
 
@@ -204,7 +273,7 @@ npx tsc --noEmit
 # Compile TypeScript
 npx tsc
 
-# Run tests
+# Run tests (requires YOUTUBE_API_KEY environment variable)
 node test-agents.js
 
 # Linting (if ESLint is configured)

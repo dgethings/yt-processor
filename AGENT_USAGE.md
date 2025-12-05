@@ -161,16 +161,18 @@ Example: `"Never Gonna Give You Up - Official Video"` → `"Never Gonna Give You
 
 ## Testing
 
-Run the test script to verify functionality:
+Run the test script to verify functionality (requires `YOUTUBE_API_KEY` environment variable):
 
 ```bash
 node test-agents.js
 ```
 
 This will test:
-1. YouTube transcript tool
-2. Transcript summarizer
-3. YouTube processor agent
+1. YouTube transcript tool (requires API key)
+2. Transcript summarizer (works without API key)
+3. YouTube processor agent (requires API key)
+
+**Note**: The YouTube transcript tool and processor agent tests will fail without a valid YouTube Data API v3 key. The transcript summarizer test runs independently.
 
 ## Integration with OpenCode
 
@@ -207,6 +209,9 @@ npx tsc
 
 - The system respects YouTube's Terms of Service
 - API quota limits apply (10,000 units/day for standard API key)
+- **Quota Details**: Each video metadata fetch costs 1 unit; transcripts are free (not counted against quota)
+- **Cost**: Free up to 10,000 units/day; additional quota available for purchase through Google Cloud
+- **Monitoring**: Check usage at [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → YouTube Data API v3 → Quotas
 - Some videos may not have accessible transcripts
 - All dates are formatted using the user's locale settings
 - File operations require appropriate filesystem permissions
