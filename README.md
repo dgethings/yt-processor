@@ -143,9 +143,10 @@ npx prettier --write .
 ## How It Works
 
 1. **Metadata Fetching**: Uses YouTube Data API v3 to get video title and description
-2. **Transcript Extraction**: Attempts multiple methods to fetch transcripts:
-   - Direct timedtext endpoint with language preferences
-   - Fallback to language-agnostic endpoint
+2. **Transcript Extraction**: Uses the `t-youtube-transcript-fetcher` library to fetch transcripts:
+   - Leverages the library's robust transcript fetching capabilities
+   - Automatic language detection and fallback
+   - Proper error handling for unavailable transcripts
 3. **Error Handling**: Graceful degradation when transcripts aren't available
 
 ## Limitations
