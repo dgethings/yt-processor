@@ -1,5 +1,6 @@
 import { tool } from "@opencode-ai/plugin"
 import { z } from 'zod'
+import { YoutubeTranscript } from 't-youtube-transcript-fetcher'
 import { sanitizeTitle } from '../utils/sanitize.js'
 
 const DEBUG = process.env.DEBUG === 'yt-processor'
@@ -34,77 +35,46 @@ function validateYouTubeVideoId(videoId: string): void {
   }
 }
 
-function parseTranscriptXML(xmlText: string): string {
-  if (!xmlText || xmlText.trim() === '') {
-    return ''
-  }
-  
-  const textMatches = xmlText.match(/<text[^>]*>([^<]*)<\/text>/g)
-  if (!textMatches) {
-    return ''
-  }
-  
-  return textMatches
-    .map(match => match.replace(/<text[^>]*>([^<]*)<\/text>/, '$1'))
-    .join(' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .trim()
-}
+
 
 async function getYouTubeTranscript(videoId: string): Promise<string> {
   validateYouTubeVideoId(videoId)
 
   if (DEBUG) console.log(`[youtube-transcript] Fetching transcript for video ${videoId}`)
 
-  // Try multiple approaches to get transcript
-  
-  // Method 1: Try direct timedtext endpoint with different languages
-  // Include common languages and auto-generated captions (empty lang param)
-  const languages = ['', 'en', 'en-US', 'en-GB', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ja', 'ko', 'zh-CN', 'zh-TW', 'ar', 'hi']
-  
-  for (const lang of languages) {
-    try {
-      const transcriptUrl = `https://video.google.com/timedtext?lang=${lang}&v=${videoId}&fmt=srv1`
-      const response = await fetch(transcriptUrl)
-      
-      if (response.ok) {
-        const text = await response.text()
-        const transcriptText = parseTranscriptXML(text)
-        
-        if (transcriptText) {
-          return transcriptText
-        }
-      }
-    } catch (error) {
-      console.debug(`Transcript fetch failed for lang=${lang}: ${error instanceof Error ? error.message : String(error)}`)
-      // Continue to next method
-    }
-  }
-  
-  // Method 2: Try without language specification
   try {
-    const transcriptUrl = `https://video.google.com/timedtext?v=${videoId}&fmt=srv1`
-    const response = await fetch(transcriptUrl)
-    
-    if (response.ok) {
-      const text = await response.text()
-      const transcriptText = parseTranscriptXML(text)
-      
-      if (transcriptText) {
-        return transcriptText
-      }
+    // Use the t-youtube-transcript-fetcher library to get transcript
+    // This library provides robust transcript fetching with automatic language detection
+    const transcriptSegments = await YoutubeTranscript.fetchTranscript(videoId)
+
+    // Convert the array of transcript segments to a single concatenated string
+    const transcriptText = transcriptSegments
+      .map(segment => segment.text)
+      .join(' ')
+      .trim()
+
+    if (!transcriptText) {
+      throw new Error('No transcript available for this video. The video may not have captions or they may not be accessible through the public API.')
     }
+
+    return transcriptText
   } catch (error) {
-    console.debug(`Transcript fetch failed for fallback method: ${error instanceof Error ? error.message : String(error)}`)
-    // Continue to fallback
+    // Handle library-specific errors and convert to our expected error format
+    if (error instanceof Error) {
+      // Re-throw with our consistent error message for known library errors
+      if (error.message.includes('No transcript') ||
+          error.message.includes('Transcript disabled') ||
+          error.message.includes('Video unavailable') ||
+          error.message.includes('Language not found')) {
+        throw new Error('No transcript available for this video. The video may not have captions or they may not be accessible through the public API.')
+      }
+      // For other errors, include the original message
+      throw new Error(`Failed to fetch transcript: ${error.message}`)
+    }
+
+    // Fallback for unknown error types
+    throw new Error('No transcript available for this video. The video may not have captions or they may not be accessible through the public API.')
   }
-  
-   // If all methods fail, throw an error for consistency
-   throw new Error('No transcript available for this video. The video may not have captions or they may not be accessible through the public API.')
 }
 
 async function getYouTubeMetadata(videoId: string): Promise<{ title: string; description: string }> {

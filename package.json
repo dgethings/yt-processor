@@ -5,6 +5,7 @@
   "type": "module",
   "dependencies": {
     "@opencode-ai/plugin": "1.0.0",
+    "t-youtube-transcript-fetcher": "^1.0.6",
     "zod": "4.0.0"
   },
   "scripts": {
