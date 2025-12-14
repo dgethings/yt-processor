@@ -35,7 +35,7 @@ class TestValidateYouTubeVideoId:
             validate_youtube_video_id(video_id)  # Should not raise
 
 
-def test_invalid_video_id(self):
+def test_invalid_video_id():
     """Test invalid video IDs."""
     invalid_ids = [
         "short",
@@ -64,10 +64,13 @@ class TestGetYouTubeTranscript:
     def test_transcript_success(self):
         """Test successful transcript fetching."""
         with patch("youtube_transcript.YouTubeTranscriptApi.fetch") as mock_get:
-            mock_get.return_value = [
-                {"text": "Hello world", "start": 0.0, "duration": 1.0},
-                {"text": "This is a test", "start": 1.0, "duration": 2.0},
-            ]
+            # Create mock objects with .text attribute
+            mock_segment1 = Mock()
+            mock_segment1.text = "Hello world"
+            mock_segment2 = Mock()
+            mock_segment2.text = "This is a test"
+
+            mock_get.return_value = [mock_segment1, mock_segment2]
 
             result = get_youtube_transcript("dQw4w9WgXcQ")
             assert result == "Hello world This is a test"
@@ -95,10 +98,16 @@ class TestGetYouTubeTranscript:
         from youtube_transcript_api._errors import NoTranscriptFound
 
         with patch("youtube_transcript.YouTubeTranscriptApi.fetch") as mock_get:
+            # Create mock object with .text attribute for the fallback
+            mock_segment = Mock()
+            mock_segment.text = "Fallback transcript"
+
             # First call raises NoTranscriptFound, second call succeeds
             mock_get.side_effect = [
-                NoTranscriptFound("No English transcript"),
-                [{"text": "Fallback transcript", "start": 0.0, "duration": 1.0}],
+                NoTranscriptFound(
+                    "dQw4w9WgXcQ", ["en"], []
+                ),  # Proper constructor arguments
+                [mock_segment],
             ]
 
             result = get_youtube_transcript("dQw4w9WgXcQ")
