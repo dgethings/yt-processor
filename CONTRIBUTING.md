@@ -6,8 +6,8 @@ Thank you for your interest in contributing to the YouTube Processor project! Th
 
 ### Prerequisites
 
-- Node.js (version 16 or higher)
-- npm or yarn package manager
+- Python 3.13+ (required)
+- pip package manager
 - Git
 - A GitHub account
 
@@ -20,9 +20,16 @@ Thank you for your interest in contributing to the YouTube Processor project! Th
    cd yt-processor
    ```
 
-2. **Install Dependencies**
+2. **Setup Virtual Environment**
    ```bash
-   npm install
+   python3 -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+3. **Install Dependencies**
+   ```bash
+   pip install -r requirements.txt
+   pip install -r requirements-dev.txt  # For development
    ```
 
 3. **Set Up Environment**

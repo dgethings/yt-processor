@@ -11,19 +11,22 @@ This project provides two opencode agents for processing YouTube videos and gene
 
 ### Prerequisites
 
-1. **YouTube Data API v3 Key**:
+1. **Python 3.13+**: Required for running the Python implementation
+
+2. **YouTube Data API v3 Key**:
    ```bash
    export YOUTUBE_API_KEY="your_api_key_here"
    ```
 
-2. **Install dependencies**:
+3. **Setup Virtual Environment**:
    ```bash
-   npm install
+   python3 -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-3. **Compile TypeScript**:
+4. **Install dependencies**:
    ```bash
-   npx tsc
+   pip install -r requirements.txt
    ```
 
 ## Agent Usage
@@ -164,7 +167,7 @@ Example: `"Never Gonna Give You Up - Official Video"` → `"Never Gonna Give You
 Run the test script to verify functionality (requires `YOUTUBE_API_KEY` environment variable):
 
 ```bash
-node test-agents.js
+python test-agents.py
 ```
 
 This will test:
@@ -173,6 +176,21 @@ This will test:
 3. YouTube processor agent (requires API key)
 
 **Note**: The YouTube transcript tool and processor agent tests will fail without a valid YouTube Data API v3 key. The transcript summarizer test runs independently.
+
+### Unit Tests
+
+Run unit tests with pytest:
+
+```bash
+python -m pytest tests/ -v
+```
+
+This will test:
+1. Video ID validation
+2. Title sanitization
+3. Transcript fetching (mocked)
+4. Metadata fetching (mocked)
+5. Error handling scenarios
 
 ## Integration with OpenCode
 

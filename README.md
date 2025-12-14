@@ -23,9 +23,26 @@ A pair of OpenCode agents that summarise a given YouTube video and saves the res
 
 ## Installation
 
-To install the YouTube processor agents and tools, you must manually copy the `.opencode` directory to the appropriate OpenCode configuration directory:
+### Prerequisites
 
-### Global Installation (Available System-Wide)
+1. **Python 3.13+**: Required for running the Python implementation
+2. **YouTube Data API v3 Key**: Required for fetching video metadata
+
+### Setup
+
+1. **Install uv** (if not already installed):
+```bash
+# Follow instructions at https://docs.astral.sh/uv/
+```
+
+2. **Install Dependencies**:
+```bash
+uv sync
+```
+
+3. **Install OpenCode Agents**: Copy the `.opencode` directory to the appropriate OpenCode configuration directory:
+
+#### Global Installation (Available System-Wide)
 
 Copy the `.opencode` directory to your global OpenCode config:
 
@@ -39,7 +56,7 @@ cp -r .opencode ~/.config/opencode/
 
 If you already have other agents or tools installed, the directories will be merged.
 
-### Project Installation (Available in Specific Project)
+#### Project Installation (Available in Specific Project)
 
 Copy the `.opencode` directory to a project's `.opencode` directory:
 
@@ -122,28 +139,28 @@ tags: ["youtube", "video"]
 
 ```bash
 # Install dependencies
-npm install
-
-# Type checking
-npx tsc --noEmit
-
-# Compile TypeScript
-npx tsc
+uv sync
 
 # Run tests (requires YOUTUBE_API_KEY environment variable)
-node test-agents.js
+uv run python test-agents.py
 
-# Linting (if ESLint is configured)
-npx eslint .
+# Run unit tests with pytest
+uv run pytest tests/ -v
 
-# Code formatting (if Prettier is configured)
-npx prettier --write .
+# Code formatting
+uv run black .opencode/ tests/
+
+# Linting
+uv run ruff check .opencode/ tests/
+
+# Type checking
+uv run mypy .opencode/
 ```
 
 ## How It Works
 
 1. **Metadata Fetching**: Uses YouTube Data API v3 to get video title and description
-2. **Transcript Extraction**: Uses the `t-youtube-transcript-fetcher` library to fetch transcripts:
+2. **Transcript Extraction**: Uses the `youtube-transcript-api` library to fetch transcripts:
    - Leverages the library's robust transcript fetching capabilities
    - Automatic language detection and fallback
    - Proper error handling for unavailable transcripts

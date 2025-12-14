@@ -337,20 +337,70 @@ export BEADS_PROJECT_ID="<project-id>"
 
 **When to use:** Only for blocking coordination needs. Use `bd` dependencies first.
 
+## Setup & Development
+
+### Environment Management with uv
+This project uses `uv` for Python environment and dependency management.
+
+**Installation:**
+```bash
+# Install uv (https://docs.astral.sh/uv/)
+# Then sync dependencies:
+uv sync
+```
+
+**Activating the environment:**
+```bash
+# Using uv run (recommended)
+uv run pytest
+
+# Or enter the virtual environment
+source .venv/bin/activate  # macOS/Linux
+# or on Windows: .venv\Scripts\activate
+```
+
+## Build, Lint & Test Commands
+
+### Python (Main Project)
+- **Run all tests:** `uv run pytest`
+- **Run single test:** `uv run pytest tests/test_sanitize.py::test_sanitize_html`
+- **Run with coverage:** `uv run pytest --cov=opencode`
+- **Type check:** `uv run mypy .opencode/`
+- **Format code:** `uv run black .`
+- **Lint:** `uv run ruff check .` (or `uv run ruff check . --fix` to auto-fix)
+
+### JavaScript (OpenCode Agents)
+The `.opencode/` directory contains OpenCode agent definitions. No build required; just ensure `@opencode-ai/plugin` is installed.
+
+## Python Code Style Guidelines
+
+- **Language:** Python 3.13+
+- **Imports:** Use standard library imports first, then third-party (alphabetically), then local imports
+- **Type annotations:** Required on all function signatures (enforced by `disallow_untyped_defs`)
+- **Naming:** `snake_case` for functions/variables, `PascalCase` for classes
+- **Line length:** 88 characters (Black standard)
+- **Error handling:** Use specific exception types, avoid bare `except:`
+- **Docstrings:** Use for public functions/classes (optional but recommended)
+- **Testing:** All tests in `tests/` directory named `test_*.py`
+- **Dependencies:** Add new dependencies to `pyproject.toml` (not requirements files)
+
 ## Summary
 
-**You are now ready to work on this project using `bd`:**
+**You are now ready to work on this project using `bd` and `uv`:**
 
 1. ✅ Read this document
-2. ✅ Run `bd ready` to see available work
-3. ✅ Claim issues with `bd update <issue-id> --status in_progress`
-4. ✅ Create session issues for context tracking
-5. ✅ File issues immediately when discovered
-6. ✅ Link dependencies to prevent duplicate work
-7. ✅ Close completed work with `bd close` and save changes using `git`
-8. ✅ Restore context between sessions using session issues
+2. ✅ Run `uv sync` to set up the Python environment
+3. ✅ Run `bd ready` to see available work
+4. ✅ Claim issues with `bd update <issue-id> --status in_progress`
+5. ✅ Create session issues for context tracking
+6. ✅ File issues immediately when discovered
+7. ✅ Link dependencies to prevent duplicate work
+8. ✅ Run tests before committing: `uv run pytest`
+9. ✅ Format code: `uv run black .` and `uv run ruff check . --fix`
+10. ✅ Close completed work with `bd close` and save changes using `git`
 
 **Database location:** `.beads/beads.db`  
 **Documentation:** <https://github.com/steveyegge/beads>  
+**uv Documentation:** <https://docs.astral.sh/uv/>  
 
 Good luck! 🚀
